@@ -1,0 +1,57 @@
+@Metadata.layer: #CORE
+
+@UI.headerInfo: { typeName: 'FieldIndex', typeNamePlural: 'FieldIndexs' }
+
+@UI.presentationVariant: [
+  {
+    sortOrder: [
+      {
+        by: 'entityname',
+        direction: #ASC
+      },
+      {
+        by: 'elementname',
+        direction: #ASC
+      }
+    ],
+    groupBy: [ 'entityname' ],
+    visualizations: [{type: #AS_LINEITEM}]
+  }
+]
+
+annotate view ZC_CDSFIELDINDEX with
+
+{
+  @UI.facet: [ { id: 'idIdentification', type: #IDENTIFICATION_REFERENCE, label: 'FieldIndex', position: 10 } ]
+  @UI.identification: [ { position: 10, label: 'EntityName' } ]
+  @UI.lineItem: [ { position: 10, importance: #MEDIUM, label: 'EntityName' } ]
+  @UI.selectionField: [ { position: 10 } ]
+
+
+
+  entityname;
+
+  @UI.identification: [ { position: 20, label: 'ElementName' } ]
+  @UI.lineItem: [ { position: 20, importance: #MEDIUM, label: 'ElementName' } ]
+  @UI.selectionField: [ { position: 20 } ]
+  elementname;
+
+  @UI.identification: [ { position: 30, label: '' } ]
+  @UI.lineItem: [ { position: 30, importance: #MEDIUM, label: '' } ]
+  @UI.selectionField: [ { position: 30 } ]
+  baseobject;
+
+  @UI.identification: [ { position: 40, label: 'BaseField' } ]
+  @UI.lineItem: [ { position: 40, importance: #MEDIUM, label: 'BaseField' } ]
+  @UI.selectionField: [ { position: 40 } ]
+  basefield;
+
+  @UI.identification: [ { position: 50, label: 'CompatibilityContract' } ]
+  @UI.lineItem: [ { position: 50, importance: #MEDIUM, label: 'CompatibilityContract' } ]
+  @UI.selectionField: [ { position: 50 }  ]
+  @Consumption.filter.defaultValue: 'C1' 
+  compatibilitycontract;
+
+  @UI.hidden: true
+  locallastchanged;
+}

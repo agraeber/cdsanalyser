@@ -1,0 +1,46 @@
+managed implementation in class zbp_i_cdsfieldindex unique;
+strict ( 1 );
+with draft;
+
+define behavior for ZI_CDSFIELDINDEX alias FieldIndex
+persistent table zcdsfieldindex
+draft table zcdsfieldindex_d
+etag master Locallastchanged
+lock master total etag Lastchanged
+authorization master( global )
+
+{
+  field ( mandatory : create )
+   EntityName,
+   ElementName;
+
+  field ( readonly )
+   Lastchanged,
+   Locallastchanged;
+
+  field ( readonly : update )
+   EntityName,
+   ElementName;
+
+
+  create;
+  update;
+  delete;
+
+  draft action Edit;
+  draft action Activate;
+  draft action Discard;
+  draft action Resume;
+  draft determine action Prepare;
+
+  mapping for ZCDSFIELDINDEX
+  {
+    EntityName = ENTITY_NAME;
+    ElementName = ELEMENT_NAME;
+    BaseObject = BASE_OBJECT;
+    BaseField = BASE_FIELD;
+    CompatibilityContract = COMPATIBILITY_CONTRACT;
+    Locallastchanged = LOCALLASTCHANGED;
+    Lastchanged = LASTCHANGED;
+  }
+}

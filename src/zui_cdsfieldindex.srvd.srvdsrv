@@ -1,0 +1,4 @@
+@EndUserText.label: 'Service definition forZC_CDSFIELDINDEX'
+define service ZUI_CDSFIELDINDEX {
+  expose ZC_CDSFIELDINDEX as FieldIndex;
+}

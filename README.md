@@ -10,10 +10,10 @@ Analyse once a great amount of CDS views, selected by name and put the results i
 Run this report once for all the CDS view you want to analyse
 
 Second Report - ZGET_CDS_FOR_DB_FIELD - Search and Display
-A old fashioned report which selects for any given CDS view field all database fields or vica versa in a very short time.
+An old fashioned report which selects for any given CDS view field all database fields or vica versa in a very short time.
 
 OData-UIV4-Service - ZUI_CDSFIELDINDEX_V4
 Use this one to build an FIORI App or youse the Preview of the service
 
-Find the detailled desription in:
+Find the detailled description in:
 https://community.sap.com/t5/technology-blogs-by-members/how-to-find-cds-views-for-db-table-fields/ba-p/13880899

@@ -23,10 +23,6 @@ authorization master( global )
    ElementName;
 
 
-  create;
-  update;
-  delete;
-
   draft action Edit;
   draft action Activate;
   draft action Discard;

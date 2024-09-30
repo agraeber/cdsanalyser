@@ -24,26 +24,27 @@ annotate view ZC_CDSFIELDINDEX with
 {
   @UI.facet: [ { id: 'idIdentification', type: #IDENTIFICATION_REFERENCE, label: 'FieldIndex', position: 10 } ]
   @UI.identification: [ { position: 10, label: 'EntityName' } ]
-  @UI.lineItem: [ { position: 10, importance: #MEDIUM, label: 'EntityName' } ]
+  @UI.lineItem: [ { position: 10, importance: #MEDIUM } ]
   @UI.selectionField: [ { position: 10 } ]
-
-
-
+  @EndUserText.label: 'CDS Entity Name'
   entityname;
 
   @UI.identification: [ { position: 20, label: 'ElementName' } ]
-  @UI.lineItem: [ { position: 20, importance: #MEDIUM, label: 'ElementName' } ]
+  @UI.lineItem: [ { position: 20, importance: #MEDIUM } ]
   @UI.selectionField: [ { position: 20 } ]
+  @EndUserText.label: 'CDS Element Name' 
   elementname;
 
   @UI.identification: [ { position: 30, label: '' } ]
   @UI.lineItem: [ { position: 30, importance: #MEDIUM, label: '' } ]
   @UI.selectionField: [ { position: 30 } ]
+  @EndUserText.label: 'Table Name'
   baseobject;
 
-  @UI.identification: [ { position: 40, label: 'BaseField' } ]
-  @UI.lineItem: [ { position: 40, importance: #MEDIUM, label: 'BaseField' } ]
+  @UI.identification: [ { position: 40 } ]
+  @UI.lineItem: [ { position: 40, importance: #MEDIUM } ]
   @UI.selectionField: [ { position: 40 } ]
+  @EndUserText.label: 'Table Field Name'  
   basefield;
 
   @UI.identification: [ { position: 50, label: 'CompatibilityContract' } ]

@@ -76,11 +76,8 @@ CLASS lcl_build_cds_dbtab_fld_index IMPLEMENTATION.
       SELECT SINGLE a~ApplicationComponent,
                     a~ApplicationComponentName,
                     b~ApplicationComponentText
-        " TODO: variable is assigned but never used (ABAP cleaner)
         INTO ( @DATA(appcmp),
-               " TODO: variable is assigned but never used (ABAP cleaner)
                @DATA(appcmpname),
-               " TODO: variable is assigned but never used (ABAP cleaner)
                @DATA(appcmptext) )
         FROM cds_views_pkg_appcomp AS a
                INNER JOIN
@@ -100,14 +97,15 @@ CLASS lcl_build_cds_dbtab_fld_index IMPLEMENTATION.
       ENDTRY.
 
       MOVE-CORRESPONDING field_infos TO base_fields.
-      MODIFY base_fields FROM VALUE #( appcmp = appcmp appcmpname = appcmpname appcmptext = appcmptext )
-      TRANSPORTING appcmp appcmpname appcmptext WHERE appcmp IS INITIAL.
+      MODIFY base_fields FROM VALUE #( appcmp     = appcmp
+                                       appcmpname = appcmpname
+                                       appcmptext = appcmptext )
+             TRANSPORTING appcmp appcmpname appcmptext WHERE appcmp IS INITIAL.
 
       SORT base_fields BY base_field.
 
       LOOP AT base_fields ASSIGNING FIELD-SYMBOL(<basefield>) WHERE base_field IS NOT INITIAL.
-        " TODO: variable is assigned but never used (ABAP cleaner)
-        DATA(base_field_d) = me->determine_duplicate( <basefield> ).
+        me->determine_duplicate( <basefield> ).
       ENDLOOP.
 
       me->delete_duplicates( ).
@@ -117,7 +115,7 @@ CLASS lcl_build_cds_dbtab_fld_index IMPLEMENTATION.
       LOOP AT base_fields ASSIGNING <basefield>. " into  w_base_field.
         DATA(entity_name) = <basefield>-entity_name.
 
-        READ TABLE base_field_duplicates INTO base_field_d WITH KEY base_field = <basefield>-base_field.
+        READ TABLE base_field_duplicates INTO data(base_field_d) WITH KEY base_field = <basefield>-base_field.
         IF sy-subrc = 0.
           <basefield>-field_dup = 'X'.
         ELSE.

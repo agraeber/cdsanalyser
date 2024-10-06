@@ -8,6 +8,9 @@ define root view entity ZI_CDSFIELDINDEX
   base_object as BaseObject,
   base_field as BaseField,
   compatibility_contract as CompatibilityContract,
+  appcmp as ApplicationComponent,
+  appcmpname as ApplicationComponentName,
+  appcmptext as ApplicationComponentDescr,
   @Semantics.systemDateTime.localInstanceLastChangedAt: true
   locallastchanged as Locallastchanged,
   @Semantics.systemDateTime.lastChangedAt: true

@@ -6,10 +6,10 @@
 *&---------------------------------------------------------------------*
 REPORT zbuild_cds_dbtab_fld_index.
 
-TABLES: ddldependency.
-INCLUDE Zbuild_cds_dbtab_fld_id_lcl.
+TABLES ddldependency.
+INCLUDE zbuild_cds_dbtab_fld_id_lcl.
 
-SELECT-OPTIONS: s_vname FOR ddldependency-ddlname.
+SELECT-OPTIONS s_vname FOR ddldependency-ddlname.
 
 INITIALIZATION.
   DATA(app) = NEW lcl_build_cds_dbtab_fld_index(  ).
@@ -19,7 +19,7 @@ START-OF-SELECTION.
   IF s_vname[] IS INITIAL.
     RETURN.
   ELSE.
-    app->base_table_extract( s_vname[] ).
+    app->extract_data( s_vname[] ).
   ENDIF.
 
 INITIALIZATION.

@@ -3,9 +3,14 @@
 *&---------------------------------------------------------------------*
 CLASS lcl_build_cds_dbtab_fld_index DEFINITION.
   PUBLIC SECTION.
-    METHODS base_table_extract
+    METHODS constructor.
+
+    METHODS extract_data
       IMPORTING i_view_name TYPE table.
+
   PRIVATE SECTION.
+    CONSTANTS co_object_type_view TYPE string VALUE 'VIEW' ##NO_TEXT.
+
     TYPES: BEGIN OF ty_s_base_field,
              entity_name            TYPE string,
              element_name           TYPE string,
@@ -30,32 +35,58 @@ CLASS lcl_build_cds_dbtab_fld_index DEFINITION.
 
            END OF ty_s_base_field.
 
+    TYPES ty_base_fields TYPE STANDARD TABLE OF ty_s_base_field.
+
+    DATA base_fields           TYPE ty_base_fields.
+    DATA base_field_duplicates TYPE ty_base_fields.
+
+    METHODS save_result_to_db IMPORTING i_base_fields TYPE ty_base_fields.
+
+    METHODS add_contract_data
+      IMPORTING i_entity_name TYPE lcl_build_cds_dbtab_fld_index=>ty_s_base_field-entity_name.
+
+    METHODS determine_duplicate
+      IMPORTING
+        i_basefield           TYPE lcl_build_cds_dbtab_fld_index=>ty_s_base_field
+      RETURNING
+        VALUE(r_base_field_d) TYPE lcl_build_cds_dbtab_fld_index=>ty_s_base_field.
+
+    METHODS delete_duplicates.
 
 ENDCLASS.
 
-CLASS lcl_build_cds_dbtab_fld_index IMPLEMENTATION.
-  METHOD base_table_extract.
 
+CLASS lcl_build_cds_dbtab_fld_index IMPLEMENTATION.
+  METHOD constructor.
+  ENDMETHOD.
+
+  METHOD extract_data.
     SELECT objectname FROM ddldependency
       INTO TABLE @DATA(db_object_names)
-      WHERE ddlname IN @i_view_name AND objecttype = 'VIEW'.
-
+      WHERE ddlname IN @i_view_name AND objecttype = @co_object_type_view.
 
     LOOP AT db_object_names ASSIGNING FIELD-SYMBOL(<db_object_name>).
+      CLEAR: base_fields,
+             base_field_duplicates.
 
       " Extract DD name for given CDS View
       SELECT SINGLE cds_ddl FROM ddl_object_names INTO @DATA(cdsddl) WHERE cds_db_view = @<db_object_name>-objectname.
 
       " Extract business module for given CDS view.
-      SELECT SINGLE a~applicationcomponent,
-                    a~applicationcomponentname,
-                    b~applicationcomponenttext
-        INTO ( @DATA(appcmp), @DATA(appcmpname), @DATA(appcmptext) )
+      SELECT SINGLE a~ApplicationComponent,
+                    a~ApplicationComponentName,
+                    b~ApplicationComponentText
+        " TODO: variable is assigned but never used (ABAP cleaner)
+        INTO ( @DATA(appcmp),
+               " TODO: variable is assigned but never used (ABAP cleaner)
+               @DATA(appcmpname),
+               " TODO: variable is assigned but never used (ABAP cleaner)
+               @DATA(appcmptext) )
         FROM cds_views_pkg_appcomp AS a
                INNER JOIN
-                 application_component_text AS b ON a~applicationcomponent = b~applicationcomponent
-        WHERE a~ddlsourcename = @cdsddl
-          AND b~language      = 'E'.
+                 application_component_text AS b ON a~ApplicationComponent = b~ApplicationComponent
+        WHERE a~DDLSourceName = @cdsddl
+          AND b~Language      = 'E'.
 
       " Extract CDS view field name, data type,length and text
       "  select tabname leng datatype scrtext_l into t_vldt from dd03vt where
@@ -64,44 +95,30 @@ CLASS lcl_build_cds_dbtab_fld_index IMPLEMENTATION.
       DATA(finder) = NEW cl_dd_ddl_field_tracker( iv_ddlname = cdsddl ).
       TRY.
           DATA(field_infos) = finder->get_base_field_information( ).
-        CATCH cx_dd_ddl_read INTO DATA(error).
+        CATCH cx_dd_ddl_read INTO DATA(error). " TODO: variable is assigned but never used (ABAP cleaner)
 
       ENDTRY.
 
-      DATA t_base_field       TYPE STANDARD TABLE OF ty_s_base_field.
-      DATA t_base_field_d     TYPE STANDARD TABLE OF ty_s_base_field. " find duplicate fields.
+      MOVE-CORRESPONDING field_infos TO base_fields.
+      MODIFY base_fields FROM VALUE #( appcmp = appcmp appcmpname = appcmpname appcmptext = appcmptext )
+      TRANSPORTING appcmp appcmpname appcmptext WHERE appcmp IS INITIAL.
 
-      MOVE-CORRESPONDING field_infos TO t_base_field.
+      SORT base_fields BY base_field.
 
-      SORT t_base_field BY base_field.
-
-      LOOP AT t_base_field ASSIGNING FIELD-SYMBOL(<basefield>) WHERE base_field IS NOT INITIAL.
-
-        READ TABLE t_base_field_d INTO DATA(base_field_d) WITH KEY base_field = <basefield>-base_field.
-
-        IF sy-subrc EQ 0.
-          base_field_d-base_field  = <basefield>-base_field.
-          base_field_d-dup_cnt    += 1.
-          APPEND base_field_d TO t_base_field_d.
-        ELSE.
-          base_field_d-base_field = <basefield>-base_field.
-          base_field_d-dup_cnt    = 1.
-          APPEND base_field_d TO t_base_field_d.
-        ENDIF.
-
+      LOOP AT base_fields ASSIGNING FIELD-SYMBOL(<basefield>) WHERE base_field IS NOT INITIAL.
+        " TODO: variable is assigned but never used (ABAP cleaner)
+        DATA(base_field_d) = me->determine_duplicate( <basefield> ).
       ENDLOOP.
 
-      IF t_base_field_d IS NOT INITIAL.
-        DELETE t_base_field_d WHERE dup_cnt LE 1.
-      ENDIF.
+      me->delete_duplicates( ).
 
-      SORT t_base_field BY is_calculated.
+      SORT base_fields BY is_calculated.
 
-      LOOP AT t_base_field ASSIGNING <basefield>. " into  w_base_field.
+      LOOP AT base_fields ASSIGNING <basefield>. " into  w_base_field.
         DATA(entity_name) = <basefield>-entity_name.
 
-        READ TABLE t_base_field_d INTO base_field_d WITH KEY base_field = <basefield>-base_field.
-        IF sy-subrc EQ 0.
+        READ TABLE base_field_duplicates INTO base_field_d WITH KEY base_field = <basefield>-base_field.
+        IF sy-subrc = 0.
           <basefield>-field_dup = 'X'.
         ELSE.
           <basefield>-field_dup = ''.
@@ -127,29 +144,65 @@ CLASS lcl_build_cds_dbtab_fld_index IMPLEMENTATION.
 
       ENDLOOP.
 
-      SELECT SINGLE compatibility_contract FROM ars_w_api_state
-      INTO @DATA(compatibility_contract)
-      WHERE object_id EQ @entity_name
-        AND object_type EQ 'DDLS'.
-      IF sy-subrc EQ 0.
-        MODIFY t_base_field
-          FROM VALUE #( compatibility_contract = compatibility_contract )
-          TRANSPORTING compatibility_contract
-          WHERE compatibility_contract NE 'XX'.
-      ENDIF.
+      me->add_contract_data( entity_name ).
 
-      TYPES tty_zjhcdsfieldindex TYPE TABLE OF zcdsfieldindex WITH DEFAULT KEY.
-
-      DATA(insertion_entries) = VALUE tty_zjhcdsfieldindex( FOR entry IN t_base_field
-                                                            ( entity_name            = entry-entity_name
-                                                              element_name           = entry-element_name
-                                                              base_object            = entry-base_object
-                                                              base_field             = entry-base_field
-                                                              compatibility_contract = entry-compatibility_contract ) ).
-      MODIFY zcdsfieldindex FROM TABLE insertion_entries.
-      COMMIT WORK AND WAIT.
+      me->save_result_to_db( base_fields ).
 
     ENDLOOP.
+  ENDMETHOD.
+
+  METHOD save_result_to_db.
+    TYPES tty_cdsfieldindex TYPE TABLE OF zcdsfieldindex WITH DEFAULT KEY.
+
+    DATA(insertion_entries) = VALUE tty_cdsfieldindex( FOR entry IN i_base_fields
+                                                       ( entity_name            = entry-entity_name
+                                                         element_name           = entry-element_name
+                                                         base_object            = entry-base_object
+                                                         base_field             = entry-base_field
+                                                         compatibility_contract = entry-compatibility_contract
+                                                         appcmp                 = entry-appcmp
+                                                         appcmpname             = entry-appcmpname
+                                                         appcmptext             = entry-appcmptext ) ).
+    MODIFY zcdsfieldindex FROM TABLE insertion_entries.
+    COMMIT WORK AND WAIT.
+  ENDMETHOD.
+
+  METHOD add_contract_data.
+    SELECT SINGLE compatibility_contract
+      FROM ars_w_api_state
+      INTO @DATA(compatibility_contract)
+      WHERE object_id   = @i_entity_name
+        AND object_type = 'DDLS'.
+    IF sy-subrc = 0.
+      MODIFY base_fields
+             FROM VALUE #( compatibility_contract = compatibility_contract )
+             TRANSPORTING compatibility_contract
+             WHERE compatibility_contract <> 'XX'.  "dummy, valid for each entry
+    ENDIF.
+  ENDMETHOD.
+
+  METHOD determine_duplicate.
+
+
+    READ TABLE base_field_duplicates INTO      r_base_field_d  WITH KEY base_field = i_basefield-base_field.
+
+    IF sy-subrc = 0.
+      r_base_field_d-dup_cnt += 1.
+    ELSE.
+      r_base_field_d-dup_cnt = 1.
+    ENDIF.
+
+    r_base_field_d-base_field = i_basefield-base_field.
+    APPEND r_base_field_d TO base_field_duplicates.
+
+  ENDMETHOD.
+
+
+  METHOD delete_duplicates.
+
+    IF base_field_duplicates IS NOT INITIAL.
+      DELETE base_field_duplicates WHERE dup_cnt <= 1.
+    ENDIF.
 
   ENDMETHOD.
 

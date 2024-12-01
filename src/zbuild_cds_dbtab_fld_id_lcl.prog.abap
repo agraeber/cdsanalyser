@@ -32,6 +32,9 @@ CLASS lcl_build_cds_dbtab_fld_index DEFINITION.
              appcmpname             TYPE ufps_posid,
              appcmptext             TYPE c LENGTH 60,
              compatibility_contract TYPE ars_w_api_state-compatibility_contract,
+             release_state              TYPE ars_release_state,
+             use_in_key_user_apps      TYPE  ARS_USE_IN_KEY_USER_APPS,
+             use_in_sap_cloud_platform  TYPE ars_use_in_sap_cp,
 
            END OF ty_s_base_field.
 
@@ -153,29 +156,35 @@ CLASS lcl_build_cds_dbtab_fld_index IMPLEMENTATION.
     TYPES tty_cdsfieldindex TYPE TABLE OF zcdsfieldindex WITH DEFAULT KEY.
 
     DATA(insertion_entries) = VALUE tty_cdsfieldindex( FOR entry IN i_base_fields
-                                                       ( entity_name            = entry-entity_name
-                                                         element_name           = entry-element_name
-                                                         base_object            = entry-base_object
-                                                         base_field             = entry-base_field
-                                                         compatibility_contract = entry-compatibility_contract
-                                                         appcmp                 = entry-appcmp
-                                                         appcmpname             = entry-appcmpname
-                                                         appcmptext             = entry-appcmptext ) ).
+                                                       ( entity_name               = entry-entity_name
+                                                         element_name              = entry-element_name
+                                                         base_object               = entry-base_object
+                                                         base_field                = entry-base_field
+                                                         compatibility_contract    = entry-compatibility_contract
+                                                         release_state             = entry-release_state
+                                                         use_in_key_user_apps      = entry-use_in_key_user_apps
+                                                         use_in_sap_cloud_platform = entry-use_in_sap_cloud_platform
+                                                         appcmp                    = entry-appcmp
+                                                         appcmpname                = entry-appcmpname
+                                                         appcmptext                = entry-appcmptext ) ).
     MODIFY zcdsfieldindex FROM TABLE insertion_entries.
     COMMIT WORK AND WAIT.
   ENDMETHOD.
 
   METHOD add_contract_data.
-    SELECT SINGLE compatibility_contract
+    SELECT SINGLE compatibility_contract, release_state, use_in_key_user_apps, use_in_sap_cloud_platform
       FROM ars_w_api_state
-      INTO @DATA(compatibility_contract)
+      INTO @DATA(ars)
       WHERE object_id   = @i_entity_name
         AND object_type = 'DDLS'.
     IF sy-subrc = 0.
       MODIFY base_fields
-             FROM VALUE #( compatibility_contract = compatibility_contract )
-             TRANSPORTING compatibility_contract
-             WHERE compatibility_contract <> 'XX'.  "dummy, valid for each entry
+             FROM VALUE #( compatibility_contract    = ars-compatibility_contract
+                           release_state             = ars-release_state
+                           use_in_key_user_apps      = ars-use_in_key_user_apps
+                           use_in_sap_cloud_platform = ars-use_in_sap_cloud_platform )
+             TRANSPORTING compatibility_contract release_state use_in_key_user_apps use_in_sap_cloud_platform
+             WHERE compatibility_contract <> 'XX'.  " dummy, valid for each entry
     ENDIF.
   ENDMETHOD.
 

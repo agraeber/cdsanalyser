@@ -53,8 +53,14 @@ annotate view ZC_CDSFIELDINDEX with
   @Consumption.filter.defaultValue: 'C1' 
   CompatibilityContract;
 
+  @UI.identification: [ { position: 60, label: 'CompatibilityContract' } ]
+  @UI.lineItem: [ { position: 60, importance: #MEDIUM, label: 'CompatibilityContract' } ]
+  @UI.selectionField: [ { position: 60 }  ]
+  @Consumption.filter.defaultValue: 'RELEASED' 
+  ReleaseState;
+
   @UI.lineItem: [ { position: 70, importance: #MEDIUM, label: '' } ]
-  @UI.selectionField: [ { position: 60 } ]
+  @UI.selectionField: [ { position: 70 } ]
   @EndUserText.label: 'AppComponentName'
   ApplicationComponentName;
   @UI.lineItem: [ { position: 80, importance: #MEDIUM, label: '' } ]

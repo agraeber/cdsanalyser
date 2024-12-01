@@ -17,6 +17,12 @@
     </item>
     <item>
      <ID>S</ID>
+     <KEY>P_RELE</KEY>
+     <ENTRY>Released?</ENTRY>
+     <LENGTH>17</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
      <KEY>S_CONTR</KEY>
      <ENTRY>Release state</ENTRY>
      <LENGTH>21</LENGTH>

@@ -17,6 +17,10 @@ define root view entity ZC_CDSFIELDINDEX
       BaseObject,
       BaseField,
       CompatibilityContract,
+      ReleaseState,
+      UseInKeyUserApps,
+      UseInSapCloudPlatform,
+
       ApplicationComponent,
       ApplicationComponentDescr,
       ApplicationComponentName,

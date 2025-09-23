@@ -17,6 +17,9 @@ SELECTION-SCREEN BEGIN OF BLOCK db WITH FRAME TITLE TEXT-002.
 SELECTION-SCREEN END OF BLOCK db.
 SELECT-OPTIONS s_contr  FOR Zcdsfieldindex-compatibility_contract DEFAULT 'C1'.
 PARAMETERS p_rele AS CHECKBOX DEFAULT abap_true.
+PARAMETERS: rb_all   RADIOBUTTON GROUP enti DEFAULT 'X',
+            rb_rapbo RADIOBUTTON GROUP enti,
+            rb_vh    RADIOBUTTON GROUP enti.
 
 INITIALIZATION.
   DATA(app) = NEW lcl_get_cds_for_db_field(  ).
@@ -32,6 +35,9 @@ START-OF-SELECTION.
                  i_table_rg    = s_table[]
                  i_field_rg    = s_field[]
                  i_contr       = s_contr[]
-                 i_released_rg = released_range[] ).
+                 i_released_rg = released_range[] 
+                 i_get_all = rb_all
+                 i_get_ra_bo = rb_rapbo
+                 i_get_value_help = rb_vh).
   app->create_fieldcatalog( ).
   app->display_result( ).

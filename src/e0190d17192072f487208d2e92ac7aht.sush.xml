@@ -21,7 +21,7 @@
      <TTEXT>Start Authorization Check for TADIR Objects</TTEXT>
      <OCLSS>AAAB</OCLSS>
      <OKFLAG>X</OKFLAG>
-     <PS_POSID>BC-SEC-AUT-PFC</PS_POSID>
+     <PS_POSID>BC-SEC-AUT-CHK</PS_POSID>
      <CI_TEXT>Check</CI_TEXT>
      <CH_TEXT>Check</CH_TEXT>
      <PR_TEXT>No</PR_TEXT>

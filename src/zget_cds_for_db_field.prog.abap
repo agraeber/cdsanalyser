@@ -35,9 +35,9 @@ START-OF-SELECTION.
                  i_table_rg    = s_table[]
                  i_field_rg    = s_field[]
                  i_contr       = s_contr[]
-                 i_released_rg = released_range[] 
+                 i_released_rg = released_range[]
                  i_get_all = rb_all
-                 i_get_ra_bo = rb_rapbo
-                 i_get_value_help = rb_vh).
+                 i_get_rap_bo = rb_rapbo
+                 i_get_value_help = rb_vh ).
   app->create_fieldcatalog( ).
   app->display_result( ).

@@ -1,9 +1,7 @@
 @AccessControl.authorizationCheck: #CHECK
 
 @EndUserText.label: 'Projection View for ZI_CDSFIELDINDEX'
-
 @Metadata.allowExtensions: true
-
 @ObjectModel.semanticKey: [ 'EntityName', 'ElementName' ]
 
 define root view entity ZC_CDSFIELDINDEX
@@ -20,9 +18,9 @@ define root view entity ZC_CDSFIELDINDEX
       ReleaseState,
       UseInKeyUserApps,
       UseInSapCloudPlatform,
-
       ApplicationComponent,
       ApplicationComponentDescr,
-      ApplicationComponentName,
+      ApplicationComponentName,    
+      TotalElementsCount,
       Locallastchanged
 }

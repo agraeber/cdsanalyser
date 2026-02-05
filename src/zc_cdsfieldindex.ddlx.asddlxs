@@ -1,74 +1,83 @@
 @Metadata.layer: #CORE
 
-@UI.headerInfo: { typeName: 'FieldIndex', typeNamePlural: 'FieldIndexs' }
-
-@UI.presentationVariant: [
-  {
-    sortOrder: [
-      {
-        by: 'EntityName',
-        direction: #ASC
-      },
-      {
-        by: 'ElementName', 
-        direction: #ASC
-      }
-    ],
-    groupBy: [ 'EntityName' ],
-    visualizations: [{type: #AS_LINEITEM}]
-  }
-]
-
+@UI.headerInfo: { typeName: 'FieldIndex', typeNamePlural: 'FieldIndexes', title: { value: 'ElementName' } }
+@UI.chart: [ {
+    title: 'Elements by Application Component',
+    chartType: #DONUT,
+    measures: [ 'TotalElementsCount' ],
+    dimensions: [ 'ApplicationComponent' ],
+    measureAttributes: [ { measure: 'TotalElementsCount', role: #AXIS_1 } ],
+    dimensionAttributes: [ { dimension: 'ApplicationComponent', role: #CATEGORY } ]
+} ]
 annotate view ZC_CDSFIELDINDEX with
-
 {
-  @UI.facet: [ { id: 'idIdentification', type: #IDENTIFICATION_REFERENCE, label: 'FieldIndex', position: 10 } ]
-  @UI.identification: [ { position: 10, label: 'EntityName' } ]
-  @UI.lineItem: [ { position: 10, importance: #MEDIUM } ]
-  @UI.selectionField: [ { position: 10 } ]
+  /* -----------------------------------------------------------
+     FACETS (Layout Definition)
+     ----------------------------------------------------------- */
+  @UI.facet: [
+      { id: 'Collection',    type: #COLLECTION,    label: 'Details', position: 10 },
+      { id: 'GeneralData',   type: #FIELDGROUP_REFERENCE, label: 'General Information', 
+        parentId: 'Collection', position: 10, targetQualifier: 'groupGeneral' },
+      { id: 'SystemData',    type: #FIELDGROUP_REFERENCE, label: 'System & Release', 
+        parentId: 'Collection', position: 20, targetQualifier: 'groupSystem' },
+      { id: 'AppComponent',  type: #FIELDGROUP_REFERENCE, label: 'Application Component', 
+        parentId: 'Collection', position: 30, targetQualifier: 'groupApp' }
+  ]
+
+  /* -----------------------------------------------------------
+     FIELDS
+     ----------------------------------------------------------- */
   @EndUserText.label: 'CDS Entity Name'
+  @UI.lineItem: [ { position: 10, importance: #HIGH } ]
+  @UI.selectionField: [ { position: 10 } ]
+  @UI.fieldGroup: [ { qualifier: 'groupGeneral', position: 10 } ]
   EntityName;
 
-  @UI.identification: [ { position: 20, label: 'ElementName' } ]
-  @UI.lineItem: [ { position: 20, importance: #MEDIUM } ]
+  @EndUserText.label: 'CDS Element Name'
+  @UI.lineItem: [ { position: 20, importance: #HIGH } ]
   @UI.selectionField: [ { position: 20 } ]
-  @EndUserText.label: 'CDS Element Name' 
+  @UI.fieldGroup: [ { qualifier: 'groupGeneral', position: 20 } ]
   ElementName;
 
-  @UI.identification: [ { position: 30, label: '' } ]
-  @UI.lineItem: [ { position: 30, importance: #MEDIUM, label: '' } ]
-  @UI.selectionField: [ { position: 30 } ]
   @EndUserText.label: 'Table Name'
+  @UI.lineItem: [ { position: 30, importance: #MEDIUM } ]
+  @UI.fieldGroup: [ { qualifier: 'groupGeneral', position: 30 } ]
   BaseObject;
 
-  @UI.identification: [ { position: 40 } ]
+  @EndUserText.label: 'Table Field Name'
   @UI.lineItem: [ { position: 40, importance: #MEDIUM } ]
-  @UI.selectionField: [ { position: 40 } ]
-  @EndUserText.label: 'Table Field Name'  
+  @UI.fieldGroup: [ { qualifier: 'groupGeneral', position: 40 } ]
   BaseField;
 
-  @UI.identification: [ { position: 50, label: 'CompatibilityContract' } ]
-  @UI.lineItem: [ { position: 50, importance: #MEDIUM, label: 'CompatibilityContract' } ]
-  @UI.selectionField: [ { position: 50 }  ]
-  @Consumption.filter.defaultValue: 'C1' 
+  @EndUserText.label: 'Contract'
+  @UI.selectionField: [ { position: 50 } ]
+  @UI.fieldGroup: [ { qualifier: 'groupSystem', position: 10 } ]
   CompatibilityContract;
 
-  @UI.identification: [ { position: 60, label: 'CompatibilityContract' } ]
-  @UI.lineItem: [ { position: 60, importance: #MEDIUM, label: 'CompatibilityContract' } ]
-  @UI.selectionField: [ { position: 60 }  ]
-  @Consumption.filter.defaultValue: 'RELEASED' 
+  @EndUserText.label: 'Release State'
+  @UI.selectionField: [ { position: 60 } ]
+  @UI.fieldGroup: [ { qualifier: 'groupSystem', position: 20 } ]
   ReleaseState;
 
-  @UI.lineItem: [ { position: 70, importance: #MEDIUM, label: '' } ]
+  @UI.fieldGroup: [ { qualifier: 'groupSystem', position: 30, label: 'Key User Apps' } ]
   @UI.selectionField: [ { position: 70 } ]
-  @EndUserText.label: 'AppComponentName'
+  UseInKeyUserApps;
+
+  @UI.fieldGroup: [ { qualifier: 'groupSystem', position: 40, label: 'Cloud Platform' } ]
+  @UI.selectionField: [ { position: 80 } ]
+  UseInSapCloudPlatform;
+
+  @EndUserText.label: 'Component ID'
+  @UI.fieldGroup: [ { qualifier: 'groupApp', position: 10 } ]
+  ApplicationComponent;
+
+  @EndUserText.label: 'Component Name'
+  @UI.fieldGroup: [ { qualifier: 'groupApp', position: 20 } ]
   ApplicationComponentName;
-  @UI.lineItem: [ { position: 80, importance: #MEDIUM, label: '' } ]
-  @EndUserText.label: 'AppComponentText'
+
+  @EndUserText.label: 'Description'
+  @UI.fieldGroup: [ { qualifier: 'groupApp', position: 30 } ]
   ApplicationComponentDescr;
-
-
-
 
   @UI.hidden: true
   Locallastchanged;

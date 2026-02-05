@@ -20,6 +20,7 @@ define root view entity ZI_CDSFIELDINDEX
       appcmpname                as ApplicationComponentName,
       appcmptext                as ApplicationComponentDescr,
 
+      1                         as TotalElementsCount,
       @Semantics.systemDateTime.localInstanceLastChangedAt: true
       locallastchanged          as Locallastchanged,
 

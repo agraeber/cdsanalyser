@@ -1,40 +1,44 @@
-*&---------------------------------------------------------------------*
-*& Include          ZBUILD_CDS_DBTAB_FLD_ID_LCL
-*&---------------------------------------------------------------------*
-CLASS lcl_build_cds_dbtab_fld_index DEFINITION.
+CLASS zcl_cdssearch_index_handler DEFINITION
+  PUBLIC
+  FINAL
+  CREATE PUBLIC .
+
   PUBLIC SECTION.
+    TYPES: ty_view_range TYPE RANGE OF ddlname.
+
     METHODS constructor.
 
     METHODS extract_data
-      IMPORTING i_view_name TYPE table.
+      IMPORTING VALUE(i_view_name) TYPE ty_view_range.
+    METHODS delete_data.
 
   PRIVATE SECTION.
     CONSTANTS co_object_type_view TYPE string VALUE 'VIEW' ##NO_TEXT.
 
     TYPES: BEGIN OF ty_s_base_field,
-             entity_name            TYPE string,
-             element_name           TYPE string,
-             base_object            TYPE string,
-             base_field             TYPE string,
-             is_calculated          TYPE abap_bool,
-             tabclass               TYPE tabclass,
-             cdsview                TYPE objectname,
-             elefield               TYPE string,
-             vleng                  TYPE ddleng,
-             vdatatype              TYPE datatype_d,
-             vscrtext_l             TYPE scrtext_l,
-             tleng                  TYPE ddleng,
-             tdatatype              TYPE datatype_d,
-             tscrtext_l             TYPE scrtext_l,
-             dup_cnt                TYPE i,
-             field_dup              TYPE string,
-             appcmp                 TYPE uffctr,
-             appcmpname             TYPE ufps_posid,
-             appcmptext             TYPE c LENGTH 60,
-             compatibility_contract TYPE ars_w_api_state-compatibility_contract,
-             release_state              TYPE ars_release_state,
-             use_in_key_user_apps      TYPE  ARS_USE_IN_KEY_USER_APPS,
-             use_in_sap_cloud_platform  TYPE ars_use_in_sap_cp,
+             entity_name               TYPE string,
+             element_name              TYPE string,
+             base_object               TYPE string,
+             base_field                TYPE string,
+             is_calculated             TYPE abap_bool,
+             tabclass                  TYPE tabclass,
+             cdsview                   TYPE objectname,
+             elefield                  TYPE string,
+             vleng                     TYPE ddleng,
+             vdatatype                 TYPE datatype_d,
+             vscrtext_l                TYPE scrtext_l,
+             tleng                     TYPE ddleng,
+             tdatatype                 TYPE datatype_d,
+             tscrtext_l                TYPE scrtext_l,
+             dup_cnt                   TYPE i,
+             field_dup                 TYPE string,
+             appcmp                    TYPE uffctr,
+             appcmpname                TYPE ufps_posid,
+             appcmptext                TYPE c LENGTH 60,
+             compatibility_contract    TYPE ars_w_api_state-compatibility_contract,
+             release_state             TYPE ars_release_state,
+             use_in_key_user_apps      TYPE  ars_use_in_key_user_apps,
+             use_in_sap_cloud_platform TYPE ars_use_in_sap_cp,
 
            END OF ty_s_base_field.
 
@@ -46,24 +50,30 @@ CLASS lcl_build_cds_dbtab_fld_index DEFINITION.
     METHODS save_result_to_db IMPORTING i_base_fields TYPE ty_base_fields.
 
     METHODS add_contract_data
-      IMPORTING i_entity_name TYPE lcl_build_cds_dbtab_fld_index=>ty_s_base_field-entity_name.
+      IMPORTING i_entity_name TYPE ty_s_base_field-entity_name.
 
     METHODS determine_duplicate
       IMPORTING
-        i_basefield           TYPE lcl_build_cds_dbtab_fld_index=>ty_s_base_field
+        i_basefield           TYPE ty_s_base_field
       RETURNING
-        VALUE(r_base_field_d) TYPE lcl_build_cds_dbtab_fld_index=>ty_s_base_field.
+        VALUE(r_base_field_d) TYPE ty_s_base_field.
 
     METHODS delete_duplicates.
 
 ENDCLASS.
 
 
-CLASS lcl_build_cds_dbtab_fld_index IMPLEMENTATION.
+CLASS zcl_cdssearch_index_handler IMPLEMENTATION.
   METHOD constructor.
   ENDMETHOD.
 
   METHOD extract_data.
+    IF i_view_name IS INITIAL.
+      i_view_name = VALUE #( sign = 'I' option = 'CP' ( low = 'I_*' ) (  low = 'P_*' ) ).
+    ENDIF.
+
+    me->delete_data( ).
+
     SELECT objectname FROM ddldependency
       INTO TABLE @DATA(db_object_names)
       WHERE ddlname IN @i_view_name AND objecttype = @co_object_type_view.
@@ -118,7 +128,7 @@ CLASS lcl_build_cds_dbtab_fld_index IMPLEMENTATION.
       LOOP AT base_fields ASSIGNING <basefield>. " into  w_base_field.
         DATA(entity_name) = <basefield>-entity_name.
 
-        READ TABLE base_field_duplicates INTO data(base_field_d) WITH KEY base_field = <basefield>-base_field.
+        READ TABLE base_field_duplicates INTO DATA(base_field_d) WITH KEY base_field = <basefield>-base_field.
         IF sy-subrc = 0.
           <basefield>-field_dup = 'X'.
         ELSE.
@@ -167,7 +177,7 @@ CLASS lcl_build_cds_dbtab_fld_index IMPLEMENTATION.
                                                          appcmp                    = entry-appcmp
                                                          appcmpname                = entry-appcmpname
                                                          appcmptext                = entry-appcmptext ) ).
-    MODIFY zcdsfieldindex FROM TABLE insertion_entries.
+    MODIFY zcdsfieldindex FROM TABLE insertion_entries ##WARN_OK.
     COMMIT WORK AND WAIT.
   ENDMETHOD.
 
@@ -213,4 +223,8 @@ CLASS lcl_build_cds_dbtab_fld_index IMPLEMENTATION.
 
   ENDMETHOD.
 
+  METHOD delete_data.
+    DELETE FROM zcdsfieldindex WHERE base_field <> 'DUMMY'.
+    COMMIT WORK AND WAIT.
+  ENDMETHOD.
 ENDCLASS.

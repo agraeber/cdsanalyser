@@ -3,7 +3,7 @@
  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
   <asx:values>
    <PROGDIR>
-    <NAME>ZDELETE_CDS_DBTAB_FLD_INDEX</NAME>
+    <NAME>ZCDSSEARCH_BUILD_INDEX_VIA_JOB</NAME>
     <SUBC>1</SUBC>
     <RLOAD>D</RLOAD>
     <FIXPT>X</FIXPT>

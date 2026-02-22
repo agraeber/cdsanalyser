@@ -5,10 +5,23 @@
    <PROGDIR>
     <NAME>ZCDSSEARCH_BUILD_INDEX_VIA_JOB</NAME>
     <SUBC>1</SUBC>
-    <RLOAD>D</RLOAD>
+    <RLOAD>E</RLOAD>
     <FIXPT>X</FIXPT>
     <UCCHECK>X</UCCHECK>
    </PROGDIR>
+   <TPOOL>
+    <item>
+     <ID>R</ID>
+     <ENTRY>Build up CDS index via appl.job for analysis</ENTRY>
+     <LENGTH>44</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>S_VNAME</KEY>
+     <ENTRY> CDS-View</ENTRY>
+     <LENGTH>17</LENGTH>
+    </item>
+   </TPOOL>
    <I18N_TPOOL>
     <item>
      <LANGUAGE>D</LANGUAGE>

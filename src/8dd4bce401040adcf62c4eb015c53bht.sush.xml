@@ -15,21 +15,11 @@
      <OKFLAG>X</OKFLAG>
     </USOBX>
    </USOBX>
-   <USOBX_EXT>
-    <item>
-     <OBJECT>S_START</OBJECT>
-     <TTEXT>Start Authorization Check for TADIR Objects</TTEXT>
-     <OCLSS>AAAB</OCLSS>
-     <OKFLAG>X</OKFLAG>
-     <PS_POSID>BC-SEC-AUT-CHK</PS_POSID>
-     <CI_TEXT>Check</CI_TEXT>
-     <CH_TEXT>Check</CH_TEXT>
-     <PR_TEXT>No</PR_TEXT>
-     <EXCEP>3</EXCEP>
-     <EXCEP_TX>Okay</EXCEP_TX>
-     <EXCEP_ICON>@08@</EXCEP_ICON>
-    </item>
-   </USOBX_EXT>
+   <USOBHASH>
+    <PGMID>R3TR</PGMID>
+    <OBJECT>SAJC</OBJECT>
+    <OBJ_NAME>ZCDSSEARCH_BUILD_INDEX</OBJ_NAME>
+   </USOBHASH>
   </asx:values>
  </asx:abap>
 </abapGit>

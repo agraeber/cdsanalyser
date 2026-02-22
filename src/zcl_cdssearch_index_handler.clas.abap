@@ -9,7 +9,7 @@ CLASS zcl_cdssearch_index_handler DEFINITION
     METHODS constructor.
 
     METHODS extract_data
-      IMPORTING VALUE(i_view_name) TYPE ty_view_range. 
+      IMPORTING VALUE(i_view_name) TYPE ty_view_range.
     METHODS delete_data.
 
   PRIVATE SECTION.
@@ -17,9 +17,9 @@ CLASS zcl_cdssearch_index_handler DEFINITION
 
     TYPES: BEGIN OF ty_s_base_field,
              entity_name               TYPE string,
-             element_name              TYPE string,
-             base_object               TYPE string,
-             base_field                TYPE string,
+             element_name              TYPE char30,
+             base_object               TYPE char30,
+             base_field                TYPE char30,
              is_calculated             TYPE abap_bool,
              tabclass                  TYPE tabclass,
              cdsview                   TYPE objectname,
@@ -118,10 +118,10 @@ CLASS zcl_cdssearch_index_handler IMPLEMENTATION.
 
       " Optimize duplicate detection using hashed table
       SORT base_fields BY base_field.
-      
+
       DATA: duplicate_counts TYPE HASHED TABLE OF ty_s_base_field
                              WITH UNIQUE KEY base_field.
-      
+
       LOOP AT base_fields INTO DATA(bf) WHERE base_field IS NOT INITIAL.
         DATA(dup_entry) = VALUE ty_s_base_field( base_field = bf-base_field dup_cnt = 1 ).
         INSERT dup_entry INTO TABLE duplicate_counts.
@@ -133,10 +133,10 @@ CLASS zcl_cdssearch_index_handler IMPLEMENTATION.
           ENDIF.
         ENDIF.
       ENDLOOP.
-      
+
       " Store only actual duplicates (count > 1)
       base_field_duplicates = VALUE #( FOR entry IN duplicate_counts
-                                       WHERE ( dup_cnt > 1 ) 
+                                       WHERE ( dup_cnt > 1 )
                                        ( entry ) ).
 
       SORT base_fields BY is_calculated.
@@ -155,7 +155,7 @@ CLASS zcl_cdssearch_index_handler IMPLEMENTATION.
       LOOP AT base_fields ASSIGNING FIELD-SYMBOL(<basefield>).
         " Check for duplicate using hashed table (O(1) lookup)
         <basefield>-field_dup = COND #( WHEN line_exists( duplicate_hash[ base_field = <basefield>-base_field ] )
-                                        THEN 'X' 
+                                        THEN 'X'
                                         ELSE '' ).
         <basefield>-cdsview = <db_object_name>.
 
@@ -290,3 +290,4 @@ CLASS zcl_cdssearch_index_handler IMPLEMENTATION.
     ENDIF.
   ENDMETHOD.
 ENDCLASS.
+

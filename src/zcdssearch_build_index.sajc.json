@@ -1,0 +1,10 @@
+{
+  "formatVersion": "1",
+  "header": {
+    "description": "Build up CDS index",
+    "originalLanguage": "en"
+  },
+  "generalInformation": {
+    "className": "ZCL_CDSSEARCH_BUILD_INDEX"
+  }
+}

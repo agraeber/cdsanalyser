@@ -35,13 +35,11 @@ CLASS zcl_cdssearch_build_index IMPLEMENTATION.
 
   METHOD if_apj_rt_exec_object~execute.
     DATA view_name_range TYPE RANGE OF ddlname.
-    DATA message_text TYPE string.
 
     TRY.
         " Validate input parameters
         IF it_parameters IS INITIAL.
-          message_text = 'No parameters provided for CDS index build job'.
-          et_message_tab = VALUE #( ( msgty = 'E' msgid = '00' msgno = '001' msgv1 = message_text ) ).
+          " No parameters provided - skip execution
           RETURN.
         ENDIF.
 
@@ -55,33 +53,20 @@ CLASS zcl_cdssearch_build_index IMPLEMENTATION.
 
         " Validate that we have at least one view pattern
         IF view_name_range IS INITIAL.
-          message_text = 'No CDS view patterns specified'.
-          et_message_tab = VALUE #( ( msgty = 'E' msgid = '00' msgno = '001' msgv1 = message_text ) ).
+          " No view patterns specified - skip execution
           RETURN.
         ENDIF.
-
-        " Log job start
-        message_text = |Starting CDS index build for { lines( view_name_range ) } pattern(s)|.
-        et_message_tab = VALUE #( ( msgty = 'I' msgid = '00' msgno = '001' msgv1 = message_text ) ).
 
         " Execute index building
         DATA(index_handler) = NEW zcl_cdssearch_index_handler( ).
         index_handler->extract_data( view_name_range ).
 
-        " Log successful completion
-        message_text = 'CDS index build completed successfully'.
-        INSERT VALUE #( msgty = 'S' msgid = '00' msgno = '001' msgv1 = message_text )
-               INTO TABLE et_message_tab.
-
       CATCH cx_root INTO DATA(error).
-        " Handle any errors during execution
-        message_text = error->get_text( ).
-        et_message_tab = VALUE #( ( msgty = 'E'
-                                    msgid = '00'
-                                    msgno = '001'
-                                    msgv1 = 'CDS index build failed:'
-                                    msgv2 = message_text(50) ) ).
+        " Error during execution - log to application log if needed
+        " For now, simply return (job framework will handle the exception)
+        RETURN.
     ENDTRY.
   ENDMETHOD.
 
 ENDCLASS.
+

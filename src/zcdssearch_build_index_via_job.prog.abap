@@ -34,7 +34,7 @@ START-OF-SELECTION.
                     low    = selection_line-low
                     high   = selection_line-high ) INTO TABLE job_parameter-t_value.
   ENDLOOP.
-  
+
   " Add parameter to parameters table
   INSERT job_parameter INTO TABLE job_parameters.
 

@@ -1,0 +1,39 @@
+{
+  "formatVersion": "1",
+  "header": {
+    "description": "CDS Search Build Index",
+    "originalLanguage": "en"
+  },
+  "generalInformation": {
+    "catalogName": "ZCDSSEARCH_BUILD_INDEX"
+  },
+  "parameters": {
+    "valueRangesParameters": [
+      {
+        "name": "S_VNAME",
+        "valueRanges": [
+          {
+            "sign": "include",
+            "option": "containsPattern",
+            "low": "I_*"
+          },
+          {
+            "sign": "include",
+            "option": "containsPattern",
+            "low": "P_*"
+          },
+          {
+            "sign": "include",
+            "option": "containsPattern",
+            "low": "R_*"
+          },
+          {
+            "sign": "include",
+            "option": "containsPattern",
+            "low": "A_*"
+          }
+        ]
+      }
+    ]
+  }
+}

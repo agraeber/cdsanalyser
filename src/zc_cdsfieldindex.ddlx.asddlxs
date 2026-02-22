@@ -41,30 +41,31 @@ annotate view ZC_CDSFIELDINDEX with
 
   @EndUserText.label: 'Table Name'
   @UI.lineItem: [ { position: 30, importance: #MEDIUM } ]
+  @UI.selectionField: [ { position: 30 } ]  
   @UI.fieldGroup: [ { qualifier: 'groupGeneral', position: 30 } ]
   BaseObject;
 
   @EndUserText.label: 'Table Field Name'
   @UI.lineItem: [ { position: 40, importance: #MEDIUM } ]
+  @UI.selectionField: [ { position: 40 } ]  
   @UI.fieldGroup: [ { qualifier: 'groupGeneral', position: 40 } ]
   BaseField;
 
   @EndUserText.label: 'Contract'
-  @UI.selectionField: [ { position: 50 } ]
+  @UI.selectionField: [ { position: 90 } ]
   @UI.fieldGroup: [ { qualifier: 'groupSystem', position: 10 } ]
   CompatibilityContract;
 
   @EndUserText.label: 'Release State'
-  @UI.selectionField: [ { position: 60 } ]
+  @UI.selectionField: [ { position: 80 } ]
   @UI.fieldGroup: [ { qualifier: 'groupSystem', position: 20 } ]
   ReleaseState;
 
   @UI.fieldGroup: [ { qualifier: 'groupSystem', position: 30, label: 'Key User Apps' } ]
-  @UI.selectionField: [ { position: 70 } ]
   UseInKeyUserApps;
 
   @UI.fieldGroup: [ { qualifier: 'groupSystem', position: 40, label: 'Cloud Platform' } ]
-  @UI.selectionField: [ { position: 80 } ]
+  @UI.selectionField: [ { position: 100 } ]
   UseInSapCloudPlatform;
 
   @EndUserText.label: 'Component ID'

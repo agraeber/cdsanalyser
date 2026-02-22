@@ -10,6 +10,7 @@
     <LANGDEP>X</LANGDEP>
     <DDTEXT>CDS view fields and db table fields</DDTEXT>
     <MASTERLANG>E</MASTERLANG>
+    <MAINFLAG>X</MAINFLAG>
     <CONTFLAG>A</CONTFLAG>
     <EXCLASS>1</EXCLASS>
    </DD02V>

@@ -18,8 +18,15 @@ INITIALIZATION.
                        ( low = 'A_*' ) ).
 
 START-OF-SELECTION.
-  DATA job_parameters    TYPE cl_apj_rt_api=>tt_job_parameter_value.
+  " Validate selection
+  IF s_vname[] IS INITIAL.
+    MESSAGE 'Please enter at least one CDS view pattern' TYPE 'E'.
+    RETURN.
+  ENDIF.
 
+  DATA job_parameters TYPE cl_apj_rt_api=>tt_job_parameter_value.
+
+  " Build job parameter for CDS view selection
   DATA(job_parameter) = VALUE cl_apj_rt_api=>ty_job_parameter_value( name = 'S_VNAME' ).
   LOOP AT s_vname[] INTO DATA(selection_line).
     INSERT VALUE #( sign   = selection_line-sign
@@ -27,8 +34,11 @@ START-OF-SELECTION.
                     low    = selection_line-low
                     high   = selection_line-high ) INTO TABLE job_parameter-t_value.
   ENDLOOP.
+  
+  " Add parameter to parameters table
+  INSERT job_parameter INTO TABLE job_parameters.
 
-  " 2. Startzeitpunkt definieren (Sofort-Start)
+  " Define start time (immediate start)
   DATA(job_start_info) = VALUE cl_apj_rt_api=>ty_start_info( start_immediately = abap_true ).
 
   TRY.

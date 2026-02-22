@@ -9,7 +9,7 @@ CLASS zcl_cdssearch_index_handler DEFINITION
     METHODS constructor.
 
     METHODS extract_data
-      IMPORTING VALUE(i_view_name) TYPE ty_view_range.
+      IMPORTING VALUE(i_view_name) TYPE ty_view_range. 
     METHODS delete_data.
 
   PRIVATE SECTION.
@@ -39,7 +39,6 @@ CLASS zcl_cdssearch_index_handler DEFINITION
              release_state             TYPE ars_release_state,
              use_in_key_user_apps      TYPE  ars_use_in_key_user_apps,
              use_in_sap_cloud_platform TYPE ars_use_in_sap_cp,
-
            END OF ty_s_base_field.
 
     TYPES ty_base_fields TYPE STANDARD TABLE OF ty_s_base_field.
@@ -65,6 +64,7 @@ ENDCLASS.
 
 CLASS zcl_cdssearch_index_handler IMPLEMENTATION.
   METHOD constructor.
+    " Initialization if needed in future
   ENDMETHOD.
 
   METHOD extract_data.
@@ -86,17 +86,17 @@ CLASS zcl_cdssearch_index_handler IMPLEMENTATION.
       SELECT SINGLE cds_ddl FROM ddl_object_names INTO @DATA(cdsddl) WHERE cds_db_view = @<db_object_name>-objectname.
 
       " Extract business module for given CDS view.
-      SELECT SINGLE a~ApplicationComponent,
-                    a~ApplicationComponentName,
-                    b~ApplicationComponentText
+      SELECT SINGLE a~applicationcomponent,
+                    a~applicationcomponentname,
+                    b~applicationcomponenttext
         INTO ( @DATA(appcmp),
                @DATA(appcmpname),
                @DATA(appcmptext) )
         FROM cds_views_pkg_appcomp AS a
                INNER JOIN
-                 application_component_text AS b ON a~ApplicationComponent = b~ApplicationComponent
-        WHERE a~DDLSourceName = @cdsddl
-          AND b~Language      = 'E'.
+                 application_component_text AS b ON a~applicationcomponent = b~applicationcomponent
+        WHERE a~ddlsourcename = @cdsddl
+          AND b~language      = 'E'.
 
       " Extract CDS view field name, data type,length and text
       "  select tabname leng datatype scrtext_l into t_vldt from dd03vt where
@@ -105,8 +105,9 @@ CLASS zcl_cdssearch_index_handler IMPLEMENTATION.
       DATA(finder) = NEW cl_dd_ddl_field_tracker( iv_ddlname = cdsddl ).
       TRY.
           DATA(field_infos) = finder->get_base_field_information( ).
-        CATCH cx_dd_ddl_read INTO DATA(error). " TODO: variable is assigned but never used (ABAP cleaner)
-
+        CATCH cx_dd_ddl_read.
+          " Skip this view if field information cannot be retrieved
+          CONTINUE.
       ENDTRY.
 
       MOVE-CORRESPONDING field_infos TO base_fields.
@@ -115,44 +116,108 @@ CLASS zcl_cdssearch_index_handler IMPLEMENTATION.
                                        appcmptext = appcmptext )
              TRANSPORTING appcmp appcmpname appcmptext WHERE appcmp IS INITIAL.
 
+      " Optimize duplicate detection using hashed table
       SORT base_fields BY base_field.
-
-      LOOP AT base_fields ASSIGNING FIELD-SYMBOL(<basefield>) WHERE base_field IS NOT INITIAL.
-        me->determine_duplicate( <basefield> ).
+      
+      DATA: duplicate_counts TYPE HASHED TABLE OF ty_s_base_field
+                             WITH UNIQUE KEY base_field.
+      
+      LOOP AT base_fields INTO DATA(bf) WHERE base_field IS NOT INITIAL.
+        DATA(dup_entry) = VALUE ty_s_base_field( base_field = bf-base_field dup_cnt = 1 ).
+        INSERT dup_entry INTO TABLE duplicate_counts.
+        IF sy-subrc <> 0.
+          READ TABLE duplicate_counts ASSIGNING FIELD-SYMBOL(<dup_count>)
+               WITH TABLE KEY base_field = bf-base_field.
+          IF sy-subrc = 0.
+            <dup_count>-dup_cnt = <dup_count>-dup_cnt + 1.
+          ENDIF.
+        ENDIF.
       ENDLOOP.
-
-      me->delete_duplicates( ).
+      
+      " Store only actual duplicates (count > 1)
+      base_field_duplicates = VALUE #( FOR entry IN duplicate_counts
+                                       WHERE ( dup_cnt > 1 ) 
+                                       ( entry ) ).
 
       SORT base_fields BY is_calculated.
 
-      LOOP AT base_fields ASSIGNING <basefield>. " into  w_base_field.
-        DATA(entity_name) = <basefield>-entity_name.
+      " Prepare data for bulk SELECT operations
+      DATA: view_fields  TYPE TABLE OF ty_s_base_field,
+            table_fields TYPE TABLE OF ty_s_base_field.
 
-        READ TABLE base_field_duplicates INTO DATA(base_field_d) WITH KEY base_field = <basefield>-base_field.
-        IF sy-subrc = 0.
-          <basefield>-field_dup = 'X'.
-        ELSE.
-          <basefield>-field_dup = ''.
-        ENDIF.
+      DATA(entity_name) = VALUE #( base_fields[ 1 ]-entity_name OPTIONAL ).
 
+      " Optimize: Use hashed table for duplicate lookup
+      DATA duplicate_hash TYPE HASHED TABLE OF ty_s_base_field
+                          WITH UNIQUE KEY base_field.
+      duplicate_hash = base_field_duplicates.
+
+      LOOP AT base_fields ASSIGNING FIELD-SYMBOL(<basefield>).
+        " Check for duplicate using hashed table (O(1) lookup)
+        <basefield>-field_dup = COND #( WHEN line_exists( duplicate_hash[ base_field = <basefield>-base_field ] )
+                                        THEN 'X' 
+                                        ELSE '' ).
         <basefield>-cdsview = <db_object_name>.
 
-        SELECT SINGLE leng datatype scrtext_l
-          INTO ( <basefield>-vleng, <basefield>-vdatatype, <basefield>-vscrtext_l )
-          FROM dd03vt
-          WHERE tabname = <db_object_name> AND fieldname = <basefield>-element_name AND ddlanguage = 'E'.
+        " Collect for batch SELECT
+        INSERT <basefield> INTO TABLE view_fields.
+        IF <basefield>-base_object IS NOT INITIAL.
+          INSERT <basefield> INTO TABLE table_fields.
+        ENDIF.
+      ENDLOOP.
 
-        SELECT SINGLE leng datatype scrtext_l
-          INTO ( <basefield>-tleng, <basefield>-tdatatype, <basefield>-tscrtext_l )
+      " Batch SELECT for view field information
+      IF view_fields IS NOT INITIAL.
+        SELECT tabname, fieldname, leng, datatype, scrtext_l
           FROM dd03vt
-          WHERE tabname = <basefield>-base_object AND fieldname = <basefield>-base_field AND ddlanguage = 'E'.
+          FOR ALL ENTRIES IN @view_fields
+          WHERE tabname = @view_fields-cdsview
+            AND fieldname = @view_fields-element_name
+            AND ddlanguage = 'E'
+          INTO TABLE @DATA(view_field_info).
+      ENDIF.
 
-        IF <basefield>-is_calculated = '' OR <basefield>-base_field <> ''.
-          CONCATENATE <basefield>-element_name ' ' 'As' ' ' '"' <basefield>-base_field '"' ',' '"' <basefield>-tscrtext_l INTO <basefield>-elefield.
-        ELSE.
-          CONCATENATE <basefield>-element_name ',' '"' <basefield>-vscrtext_l INTO <basefield>-elefield SEPARATED BY space.
+      " Batch SELECT for table field information
+      IF table_fields IS NOT INITIAL.
+        SELECT tabname, fieldname, leng, datatype, scrtext_l
+          FROM dd03vt
+          FOR ALL ENTRIES IN @table_fields
+          WHERE tabname = @table_fields-base_object
+            AND fieldname = @table_fields-base_field
+            AND ddlanguage = 'E'
+          INTO TABLE @DATA(table_field_info).
+      ENDIF.
+
+      " Update base_fields with retrieved information
+      LOOP AT base_fields ASSIGNING <basefield>.
+        " Update view field information
+        READ TABLE view_field_info INTO DATA(vf_info)
+          WITH KEY tabname = <basefield>-cdsview
+                   fieldname = <basefield>-element_name.
+        IF sy-subrc = 0.
+          <basefield>-vleng = vf_info-leng.
+          <basefield>-vdatatype = vf_info-datatype.
+          <basefield>-vscrtext_l = vf_info-scrtext_l.
         ENDIF.
 
+        " Update table field information
+        IF <basefield>-base_object IS NOT INITIAL.
+          READ TABLE table_field_info INTO DATA(tf_info)
+            WITH KEY tabname = <basefield>-base_object
+                     fieldname = <basefield>-base_field.
+          IF sy-subrc = 0.
+            <basefield>-tleng = tf_info-leng.
+            <basefield>-tdatatype = tf_info-datatype.
+            <basefield>-tscrtext_l = tf_info-scrtext_l.
+          ENDIF.
+        ENDIF.
+
+        " Build element field string
+        IF <basefield>-is_calculated = '' OR <basefield>-base_field <> ''.
+          <basefield>-elefield = |{ <basefield>-element_name } As "{ <basefield>-base_field }","{ <basefield>-tscrtext_l }|.
+        ELSE.
+          <basefield>-elefield = |{ <basefield>-element_name }, "{ <basefield>-vscrtext_l }|.
+        ENDIF.
       ENDLOOP.
 
       me->add_contract_data( entity_name ).
@@ -164,6 +229,8 @@ CLASS zcl_cdssearch_index_handler IMPLEMENTATION.
 
   METHOD save_result_to_db.
     TYPES tty_cdsfieldindex TYPE TABLE OF zcdsfieldindex WITH DEFAULT KEY.
+
+    CHECK i_base_fields IS NOT INITIAL.
 
     DATA(insertion_entries) = VALUE tty_cdsfieldindex( FOR entry IN i_base_fields
                                                        ( entity_name               = entry-entity_name
@@ -177,8 +244,13 @@ CLASS zcl_cdssearch_index_handler IMPLEMENTATION.
                                                          appcmp                    = entry-appcmp
                                                          appcmpname                = entry-appcmpname
                                                          appcmptext                = entry-appcmptext ) ).
-    MODIFY zcdsfieldindex FROM TABLE insertion_entries ##WARN_OK.
-    COMMIT WORK AND WAIT.
+    TRY.
+        MODIFY zcdsfieldindex FROM TABLE insertion_entries.
+        COMMIT WORK AND WAIT.
+      CATCH cx_sy_open_sql_db.
+        ROLLBACK WORK.
+        RAISE EXCEPTION TYPE cx_sy_open_sql_db.
+    ENDTRY.
   ENDMETHOD.
 
   METHOD add_contract_data.
@@ -199,32 +271,22 @@ CLASS zcl_cdssearch_index_handler IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD determine_duplicate.
-
-
-    READ TABLE base_field_duplicates INTO      r_base_field_d  WITH KEY base_field = i_basefield-base_field.
-
-    IF sy-subrc = 0.
-      r_base_field_d-dup_cnt += 1.
-    ELSE.
-      r_base_field_d-dup_cnt = 1.
-    ENDIF.
-
-    r_base_field_d-base_field = i_basefield-base_field.
-    APPEND r_base_field_d TO base_field_duplicates.
-
+    " This method is now obsolete - duplicate detection optimized in extract_data
+    " Kept for compatibility but not used
+    r_base_field_d = i_basefield.
   ENDMETHOD.
 
 
   METHOD delete_duplicates.
-
-    IF base_field_duplicates IS NOT INITIAL.
-      DELETE base_field_duplicates WHERE dup_cnt <= 1.
-    ENDIF.
-
+    " This method is now obsolete - duplicate detection optimized in extract_data
+    " Kept for compatibility
   ENDMETHOD.
 
   METHOD delete_data.
-    DELETE FROM zcdsfieldindex WHERE base_field <> 'DUMMY'.
-    COMMIT WORK AND WAIT.
+    " Delete all existing index data
+    DELETE FROM zcdsfieldindex.
+    IF sy-subrc = 0.
+      COMMIT WORK AND WAIT.
+    ENDIF.
   ENDMETHOD.
 ENDCLASS.

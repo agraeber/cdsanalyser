@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "sap-docs": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-fetch"],
+      "disabled": false
+    }
+  }
+}
